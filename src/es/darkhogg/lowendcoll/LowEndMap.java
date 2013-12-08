@@ -104,9 +104,18 @@ public interface LowEndMap<K, V> extends Iterable<LowEndMap.Entry<K,V>> {
      */
     public abstract Iterator<LowEndMap.Entry<K,V>> newIterator ();
 
+    /**
+     * A key-value pair.
+     * 
+     * @author Daniel Escoz
+     * @param <K> type of the key contained in this entry
+     * @param <V> type of the value contained in this entry
+     */
     public interface Entry<K, V> {
+        /** @return Key of this entry */
         public abstract K getKey ();
 
+        /** @return Value of this entry */
         public abstract V getValue ();
     }
 }
