@@ -149,10 +149,13 @@ public class LowEndHashMap<K, V> implements LowEndMap<K,V> {
 
     @Override
     public V put (K key, V value) {
-        if (size > (loadFactor * keys.length)) {
-            rehash(keys.length * 2 + 1);
+        if (isFull() && !containsKey(key)) {
+            throw new IllegalStateException("full");
         }
-
+        if (size > (loadFactor * keys.length)) {
+            rehash(Math.min(keys.length * 2 + 1, Integer.MAX_VALUE));
+        }
+        
         return putIn(keys, values, key, value);
     }
 

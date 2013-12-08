@@ -1,7 +1,6 @@
 package es.darkhogg.lowendcoll;
 
 import java.util.Iterator;
-import java.util.Map;
 
 /**
  * An object that maps keys to values.

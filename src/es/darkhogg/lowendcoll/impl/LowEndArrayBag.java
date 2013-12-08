@@ -123,10 +123,10 @@ public class LowEndArrayBag<E> implements LowEndCollection<E> {
     @Override
     public boolean add (E element) {
         if (isFull()) {
-            throw new IllegalStateException("collection full");
+            throw new IllegalStateException("full");
         }
         if (elements.length == size) {
-            elements = Arrays.copyOf(elements, size * 2 + 1);
+            elements = Arrays.copyOf(elements, Math.min(size * 2 + 1, Integer.MAX_VALUE));
         }
         elements[size++] = element;
         return true;

@@ -5,6 +5,12 @@ import java.util.Iterator;
 import es.darkhogg.lowendcoll.LowEndMap;
 import es.darkhogg.lowendcoll.LowEndSet;
 
+/**
+ * A set implemented using a {@link LowEndHashMap}.
+ * 
+ * @author Daniel Escoz
+ * @param <E> type of the elements contained in this set
+ */
 public final class LowEndHashSet<E> implements LowEndSet<E> {
 
     /** Number of iterators */
@@ -81,15 +87,15 @@ public final class LowEndHashSet<E> implements LowEndSet<E> {
     private final class LowEndHashSetIterator implements Iterator<E> {
 
         private Iterator<? extends LowEndMap.Entry<E,?>> iterator;
-        
+
         /* package */LowEndHashSetIterator () {
-            
+
         }
 
         /* package */void reset (Iterator<? extends LowEndMap.Entry<E,?>> iterator) {
             this.iterator = iterator;
         }
-        
+
         @Override
         public boolean hasNext () {
             return iterator.hasNext();
@@ -104,6 +110,6 @@ public final class LowEndHashSet<E> implements LowEndSet<E> {
         public void remove () {
             iterator.remove();
         }
-        
+
     }
 }
