@@ -5,7 +5,7 @@ The *Low-End Collections Framework* is a re-implementation of most of the Java
 Collections Framework base classes and interfaces that focus on high-performance
 and low memory allocations at the cost of some memory size and usage safety.
 
-> **WARGING**: Do not use this library unless you really need to. Read this
+> **WARNING**: Do not use this library unless you really need to. Read this
 README file carefully to see if you should use it. These classes must only be
 used for situations that *require* it, and include some *intentional* safety
 vulnerabilities for the sake of speed and low memory allocation.
