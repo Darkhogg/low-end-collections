@@ -5,7 +5,7 @@ The *Low-End Collections Framework* is a re-implementation of most of the Java
 Collections Framework base classes and interfaces that focus on high-performance
 and low memory allocations at the cost of some memory size and usage safety.
 
-**WARGING**: Do not use this library unless you really need to. Read this
+> **WARGING**: Do not use this library unless you really need to. Read this
 README file carefully to see if you should use it. These classes must only be
 used for situations that *require* it, and include some *intentional* safety
 vulnerabilities for the sake of speed and low memory allocation.
@@ -95,7 +95,7 @@ change in the future, as I think `setValue` is a nice way of modifying a
 mapping as it's iterated*.
 
 
-## Shared Iterators
+### Shared Iterators
 
 In LEC, there are two ways of getting an iterator from a collection or a map:
 `iterator()` and `newIterator()`.
@@ -151,4 +151,8 @@ implications on this approach:
   returned by `LowEndMap#newIterator()` return new entries, although they are
   *not* viewsof the mapping.
 
-+ Iterating with shared iter
++ Iterating with shared iterators, however, is not as bad as it looks. You get
+  one advantage you *need* on memory-critical applications: *There are no memory
+  allocations derived from collection iteration*. This can save you a few GC's
+  *per second*.
+
