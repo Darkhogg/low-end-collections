@@ -1,12 +1,10 @@
-package es.darkhogg.lowendcoll;
+package es.darkhogg.lowendcoll.impl;
 
-import java.util.AbstractMap;
-import java.util.AbstractSet;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
+import java.util.NoSuchElementException;
 
-import es.darkhogg.lowendcoll.LowEndArrayBag.LowEndArrayBagIterator;
+import es.darkhogg.lowendcoll.LowEndMap;
 
 /**
  * @author Daniel Escoz
@@ -14,7 +12,10 @@ import es.darkhogg.lowendcoll.LowEndArrayBag.LowEndArrayBagIterator;
  * @param <K> Type of the keys
  * @param <V> Type of the values
  */
-public class LowEndHashMap<K, V> extends AbstractMap<K,V> {
+public class LowEndHashMap<K, V> implements LowEndMap<K,V> {
+
+    /** Number of iterators */
+    private static final int ITERATORS = 3;
 
     /** The keys of this map */
     /* package */K[] keys;
@@ -28,7 +29,12 @@ public class LowEndHashMap<K, V> extends AbstractMap<K,V> {
     /** Current size of the map */
     /* package */int size;
 
-    private final LowEndHashMapEntrySet entrySet = new LowEndHashMapEntrySet();
+    /** Internal iterator */
+    @SuppressWarnings("unchecked")
+    private final LowEndHashMapIterator[] iterators = (LowEndHashMapIterator[]) new Object[ITERATORS];
+
+    /** Next iterator to retrieve */
+    private int iterator;
 
     /**
      * Creates a new closed hash map with default <i>capacity</i> and <i>load factor</i>.
@@ -63,16 +69,40 @@ public class LowEndHashMap<K, V> extends AbstractMap<K,V> {
      */
     public LowEndHashMap (Map<? extends K,? extends V> map) {
         this((int) (map.size() / .65f) + 1, .65f);
-        putAll(map);
+        for (Map.Entry<? extends K,? extends V> entry : map.entrySet()) {
+            put(entry.getKey(), entry.getValue());
+        }
     }
-    
+
+    /**
+     * Creates a new closed hash map with the same mappings as those from <tt>map</tt>.
+     * 
+     * @param map Map to copy mappings from
+     */
+    public LowEndHashMap (LowEndMap<? extends K,? extends V> map) {
+        this((int) (map.size() / .65f) + 1, .65f);
+        for (LowEndMap.Entry<? extends K,? extends V> entry : map) {
+            put(entry.getKey(), entry.getValue());
+        }
+    }
+
     @Override
     public int size () {
         return size;
     }
 
     @Override
-    public boolean containsKey (Object key) {
+    public boolean isEmpty () {
+        return size == 0;
+    }
+
+    @Override
+    public boolean isFull () {
+        return size == Integer.MAX_VALUE;
+    }
+
+    @Override
+    public boolean containsKey (K key) {
         int hash = hash(key, keys.length);
 
         int t = 0;
@@ -90,19 +120,17 @@ public class LowEndHashMap<K, V> extends AbstractMap<K,V> {
     }
 
     @Override
-    public boolean containsValue (Object value) {
+    public void clear () {
         final int al = keys.length;
         for (int i = 0; i < al; i++) {
-            V val = values[i];
-            if (keys[i] != null && (val == value || (val != null && val.equals(value)))) {
-                return true;
-            }
+            keys[i] = null;
+            values[i] = null;
         }
-        return false;
+        size = 0;
     }
 
     @Override
-    public V get (Object key) {
+    public V get (K key) {
         int hash = hash(key, keys.length);
 
         int t = 0;
@@ -129,7 +157,7 @@ public class LowEndHashMap<K, V> extends AbstractMap<K,V> {
     }
 
     @Override
-    public V remove (Object key) {
+    public V remove (K key) {
         int hash = hash(key, keys.length);
 
         int t = 0;
@@ -215,11 +243,6 @@ public class LowEndHashMap<K, V> extends AbstractMap<K,V> {
     }
 
     @Override
-    public Set<Map.Entry<K,V>> entrySet () {
-        return entrySet;
-    }
-
-    @Override
     public String toString () {
         StringBuilder sb = new StringBuilder();
         sb.append('[');
@@ -238,56 +261,52 @@ public class LowEndHashMap<K, V> extends AbstractMap<K,V> {
         }
         return sb.append(']').toString();
     }
-    
-    /**
-     * The entry map of this map.
-     * 
-     * @author Daniel Escoz
-     * @version 1.0
-     */
-    /* package */class LowEndHashMapEntrySet extends AbstractSet<Map.Entry<K,V>> {
-        private static final int ITERATORS = 3;
 
-        /** Internal iterator */
-        @SuppressWarnings("unchecked")
-        private final LowEndHashMapEntrySetIterator[] iterators =
-            (LowEndHashMapEntrySetIterator[]) new Object[ITERATORS];
-
-        /** Next iterator to retrieve */
-        private int iterator;
-
-        @Override
-        public Iterator<Map.Entry<K,V>> iterator () {
-            LowEndHashMapEntrySetIterator it = iterators[iterator++];
-            if (it == null) {
-                it = new LowEndHashMapEntrySetIterator();
-                iterators[iterator - 1] = it;
-            }
-            iterator %= ITERATORS;
-
-            it.reset();
-            return it;
+    @Override
+    public Iterator<LowEndMap.Entry<K,V>> iterator () {
+        LowEndHashMapIterator it = iterators[iterator++];
+        if (it == null) {
+            it = new LowEndHashMapIterator(true);
+            iterators[iterator - 1] = it;
         }
+        iterator %= ITERATORS;
 
-        @Override
-        public int size () {
-            return size;
-        }
+        it.reset();
+        return it;
     }
 
-    /* package */class LowEndHashMapEntrySetIterator implements Iterator<Map.Entry<K,V>> {
+    @Override
+    public Iterator<es.darkhogg.lowendcoll.LowEndMap.Entry<K,V>> newIterator () {
+        LowEndHashMapIterator it = new LowEndHashMapIterator(false);
+        it.reset();
+        return it;
+    }
+
+    private class LowEndHashMapIterator implements Iterator<LowEndMap.Entry<K,V>> {
 
         /** Entry used by this iterator */
-        private final LowEndHashMapEntry entry = new LowEndHashMapEntry();
+        private final LowEndHashMapEntry entry;
 
         /** Current iteration index */
         private int index;
+        
+        /** Whether the lastitem was removed */
+        private boolean removed;
+
+        /* package */LowEndHashMapIterator (boolean shareEntries) {
+            if (shareEntries) {
+                entry = new LowEndHashMapEntry();
+            } else {
+                entry = null;
+            }
+        }
 
         /**
          * Resets this iterator so it can be reused.
          */
         /* package */void reset () {
             index = 0;
+            removed = true;
         }
 
         @Override
@@ -301,6 +320,12 @@ public class LowEndHashMap<K, V> extends AbstractMap<K,V> {
 
         @Override
         public LowEndHashMapEntry next () {
+            if (!hasNext()) {
+                throw new NoSuchElementException();
+            }
+            removed = false;
+            final LowEndHashMapEntry entry = this.entry == null ? new LowEndHashMapEntry() : this.entry;
+
             entry.reset(keys[index], values[index]);
             index++;
             return entry;
@@ -308,19 +333,32 @@ public class LowEndHashMap<K, V> extends AbstractMap<K,V> {
 
         @Override
         public void remove () {
-            // TODO Implement this the right way
-            throw new UnsupportedOperationException();
+            if (removed) {
+                new IllegalStateException();
+            }
+            removed = true;
+            
+            // Look for the last element
+            do {
+                index--;
+            } while (keys[index] == null);
+            
+            // Remove directly
+            LowEndHashMap.this.remove(keys[index]);
         }
 
     }
 
-    /* package */class LowEndHashMapEntry implements Map.Entry<K,V> {
+    private class LowEndHashMapEntry implements LowEndMap.Entry<K,V> {
 
         /** Key of this entry */
         private K key;
 
         /** Value of this entry */
         private V value;
+
+        /* package */LowEndHashMapEntry () {
+        }
 
         /**
          * Resets the values of this entry.
@@ -342,13 +380,6 @@ public class LowEndHashMap<K, V> extends AbstractMap<K,V> {
         public V getValue () {
             return value;
         }
-
-        @Override
-        public V setValue (V newValue) {
-            V oldValue = value;
-            value = newValue;
-            put(key, value);
-            return oldValue;
-        }
     }
+
 }

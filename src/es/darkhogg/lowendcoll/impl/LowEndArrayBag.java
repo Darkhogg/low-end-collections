@@ -1,22 +1,21 @@
-package es.darkhogg.lowendcoll;
+package es.darkhogg.lowendcoll.impl;
 
-import java.util.AbstractCollection;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
+import es.darkhogg.lowendcoll.LowEndCollection;
+
 /**
  * Representation of a container of arbitrary objects in which duplicates are allowed and order is not important,
  * implemented using an array.
- * <p>
- * 
  * 
  * @author Daniel Escoz
  * @version 1.0
  * @param <E> Element type
  */
-public class LowEndArrayBag<E> extends AbstractCollection<E> implements Collection<E> {
+public class LowEndArrayBag<E> implements LowEndCollection<E> {
 
     private static final int ITERATORS = 3;
 
@@ -65,6 +64,20 @@ public class LowEndArrayBag<E> extends AbstractCollection<E> implements Collecti
     }
 
     /**
+     * Creates a new instance by adding the elements of another low end <tt>collection</tt>.
+     * 
+     * @param collection Collection with the initial elements of this bag
+     */
+    public LowEndArrayBag (final LowEndCollection<? extends E> collection) {
+        this(collection.size());
+        int i = 0;
+        for (E element : collection) {
+            elements[i++] = element;
+        }
+        size = i;
+    }
+
+    /**
      * {@inheritDoc}
      * <p>
      * This implementation returns a <i>shared iterator</i> as defined by the <i>Low-end Collections<i> with a maximum
@@ -86,12 +99,32 @@ public class LowEndArrayBag<E> extends AbstractCollection<E> implements Collecti
     }
 
     @Override
+    public boolean isEmpty () {
+        return size == 0;
+    }
+
+    @Override
+    public boolean isFull () {
+        return size == Integer.MAX_VALUE;
+    }
+
+    @Override
     public int size () {
         return size;
     }
 
     @Override
+    public Iterator<E> newIterator () {
+        LowEndArrayBagIterator it = new LowEndArrayBagIterator();
+        it.reset();
+        return it;
+    }
+
+    @Override
     public boolean add (E element) {
+        if (isFull()) {
+            throw new IllegalStateException("collection full");
+        }
         if (elements.length == size) {
             elements = Arrays.copyOf(elements, size * 2 + 1);
         }
@@ -114,13 +147,19 @@ public class LowEndArrayBag<E> extends AbstractCollection<E> implements Collecti
      * @author Daniel Escoz
      * @version 1.0
      */
-    /* package */class LowEndArrayBagIterator implements Iterator<E> {
+    private class LowEndArrayBagIterator implements Iterator<E> {
 
         private int current;
+
+        private boolean removed;
+
+        /* package */LowEndArrayBagIterator () {
+        }
 
         /** Resets this iterator so it can be reused */
         /* package */public void reset () {
             current = 0;
+            removed = true;
         }
 
         @Override
@@ -133,11 +172,16 @@ public class LowEndArrayBag<E> extends AbstractCollection<E> implements Collecti
             if (!hasNext()) {
                 throw new NoSuchElementException();
             }
+            removed = false;
             return elements[current++];
         }
 
         @Override
         public void remove () {
+            if (removed) {
+                new IllegalStateException();
+            }
+            removed = true;
             elements[--current] = elements[--size];
             elements[size] = null;
         }

@@ -1,21 +1,22 @@
-package es.darkhogg.lowendcoll;
+package es.darkhogg.lowendcoll.impl;
 
-import java.util.AbstractList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
+import es.darkhogg.lowendcoll.LowEndCollection;
+import es.darkhogg.lowendcoll.LowEndList;
+
 /**
- * Representation of an ordered container of arbitrary objects in which duplicates are allowed and order is important, implemented using an array.
- * <p>
- * 
+ * Representation of an ordered container of arbitrary objects in which duplicates are allowed and order is important,
+ * implemented using an array.
  * 
  * @author Daniel Escoz
  * @version 1.0
  * @param <E> Element type
  */
-public class LowEndArrayList<E> extends AbstractList<E> {
+public class LowEndArrayList<E> implements LowEndList<E> {
 
     private static final int ITERATORS = 3;
 
@@ -61,6 +62,43 @@ public class LowEndArrayList<E> extends AbstractList<E> {
             elements[i++] = element;
         }
         size = i;
+    }
+
+    /**
+     * Creates a new instance by adding the elements of another <tt>collection</tt>.
+     * 
+     * @param collection Collection with the initial elements of this list
+     */
+    public LowEndArrayList (final LowEndCollection<? extends E> collection) {
+        this(collection.size());
+        int i = 0;
+        for (E element : collection) {
+            elements[i++] = element;
+        }
+        size = i;
+    }
+
+    @Override
+    public boolean isEmpty () {
+        return size == 0;
+    }
+
+    @Override
+    public boolean isFull () {
+        return size == Integer.MAX_VALUE;
+    }
+
+    @Override
+    public int size () {
+        return size;
+    }
+
+    @Override
+    public void clear () {
+        for (int i = 0; i < size; i++) {
+            elements[i] = null;
+        }
+        size = 0;
     }
 
     @Override
@@ -112,8 +150,8 @@ public class LowEndArrayList<E> extends AbstractList<E> {
     }
 
     @Override
-    public int size () {
-        return size;
+    public Iterator<E> newIterator () {
+        return new LowEndArrayListIterator();
     }
 
     /**
@@ -143,13 +181,18 @@ public class LowEndArrayList<E> extends AbstractList<E> {
      * @author Daniel Escoz
      * @version 1.0
      */
-    /* package */class LowEndArrayListIterator implements Iterator<E> {
+    private class LowEndArrayListIterator implements Iterator<E> {
 
         private int current;
+        private boolean removed;
+
+        /* package */LowEndArrayListIterator () {
+        }
 
         /** Resets this iterator so it can be reused */
         /* package */public void reset () {
             current = 0;
+            removed = true;
         }
 
         @Override
@@ -162,11 +205,17 @@ public class LowEndArrayList<E> extends AbstractList<E> {
             if (!hasNext()) {
                 throw new NoSuchElementException();
             }
+            removed = false;
             return elements[current++];
         }
 
         @Override
         public void remove () {
+            if (removed) {
+                new IllegalStateException();
+            }
+            removed = true;
+            
             final int lSize = --size;
             for (int i = --current, j; i < lSize; i = j) {
                 j = i + 1;
