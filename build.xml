@@ -1,0 +1,27 @@
+<project name="LowEnd-Collections" default="dist" basedir=".">
+	<property name="dir.src" location="src" />
+	<property name="dir.bin" location="bin" />
+	<property name="dir.dist" location="dist" />
+
+	<target name="init">
+		<tstamp />
+		<mkdir dir="${dir.bin}" />
+		<mkdir dir="${dir.dist}" />
+	</target>
+
+	<target name="compile" depends="init">
+		<javac srcdir="${dir.src}" destdir="${dir.bin}" target="1.6"
+			source="1.6" includeantruntime="false" />
+	</target>
+
+	<target name="dist" depends="compile,init">
+		<mkdir dir="" />
+		<jar jarfile="${dir.dist}/low-end-collections_${DSTAMP}.jar"
+			basedir="${dir.bin}" />
+	</target>
+
+	<target name="clean">
+		<delete dir="${dir.bin}" />
+		<delete dir="${dir.dist}" />
+	</target>
+</project>
