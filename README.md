@@ -155,4 +155,3 @@ implications on this approach:
   one advantage you *need* on memory-critical applications: *There are no memory
   allocations derived from collection iteration*. This can save you a few GC's
   *per second*.
-
