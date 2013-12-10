@@ -155,7 +155,7 @@ public class LowEndHashMap<K, V> implements LowEndMap<K,V> {
         if (size > (loadFactor * keys.length)) {
             rehash(Math.min(keys.length * 2 + 1, Integer.MAX_VALUE));
         }
-        
+
         return putIn(keys, values, key, value);
     }
 
@@ -292,7 +292,7 @@ public class LowEndHashMap<K, V> implements LowEndMap<K,V> {
 
         /** Current iteration index */
         private int index;
-        
+
         /** Whether the lastitem was removed */
         private boolean removed;
 
@@ -340,12 +340,12 @@ public class LowEndHashMap<K, V> implements LowEndMap<K,V> {
                 new IllegalStateException();
             }
             removed = true;
-            
+
             // Look for the last element
             do {
                 index--;
             } while (keys[index] == null);
-            
+
             // Remove directly
             LowEndHashMap.this.remove(keys[index]);
         }
@@ -382,6 +382,11 @@ public class LowEndHashMap<K, V> implements LowEndMap<K,V> {
         @Override
         public V getValue () {
             return value;
+        }
+
+        @Override
+        public V setValue (V newValue) {
+            return put(key, newValue);
         }
     }
 

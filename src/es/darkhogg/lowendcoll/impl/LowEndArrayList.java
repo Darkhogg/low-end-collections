@@ -3,7 +3,9 @@ package es.darkhogg.lowendcoll.impl;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.ListIterator;
 import java.util.NoSuchElementException;
+import java.util.RandomAccess;
 
 import es.darkhogg.lowendcoll.LowEndCollection;
 import es.darkhogg.lowendcoll.LowEndList;
@@ -16,7 +18,7 @@ import es.darkhogg.lowendcoll.LowEndList;
  * @version 1.0
  * @param <E> Element type
  */
-public class LowEndArrayList<E> implements LowEndList<E> {
+public class LowEndArrayList<E> implements LowEndList<E>, RandomAccess {
 
     private static final int ITERATORS = 3;
 
@@ -128,6 +130,24 @@ public class LowEndArrayList<E> implements LowEndList<E> {
     }
 
     @Override
+    public void add (int pos, E elem) {
+        if (pos < 0 | pos > size) {
+            throw new IndexOutOfBoundsException(String.valueOf(pos));
+        }
+        if (isFull()) {
+            throw new IllegalStateException("full");
+        }
+        if (elements.length == size) {
+            elements = Arrays.copyOf(elements, Math.min(size * 2 + 1, Integer.MAX_VALUE));
+        }
+        for (int i = elements.length; i > pos; i--) {
+            elements[i] = elements[i - 1];
+        }
+
+        elements[pos] = elem;
+    }
+
+    @Override
     public E remove (int pos) {
         check(pos);
         E old = elements[pos];
@@ -138,6 +158,16 @@ public class LowEndArrayList<E> implements LowEndList<E> {
         }
         elements[size] = null;
         return old;
+    }
+
+    @Override
+    public Iterator<E> iterator () {
+        return listIterator(0);
+    }
+
+    @Override
+    public Iterator<E> newIterator () {
+        return newListIterator(0);
     }
 
     /**
@@ -153,8 +183,10 @@ public class LowEndArrayList<E> implements LowEndList<E> {
     }
 
     @Override
-    public Iterator<E> newIterator () {
-        return new LowEndArrayListIterator();
+    public ListIterator<E> newListIterator (int pos) {
+        LowEndArrayListIterator it = new LowEndArrayListIterator();
+        it.reset(pos);
+        return it;
     }
 
     /**
@@ -166,7 +198,7 @@ public class LowEndArrayList<E> implements LowEndList<E> {
      * @return The shared iterator of this instance
      */
     @Override
-    public Iterator<E> iterator () {
+    public ListIterator<E> listIterator (int pos) {
         LowEndArrayListIterator it = iterators[iterator++];
         if (it == null) {
             it = new LowEndArrayListIterator();
@@ -174,7 +206,7 @@ public class LowEndArrayList<E> implements LowEndList<E> {
         }
         iterator %= ITERATORS;
 
-        it.reset();
+        it.reset(pos);
         return it;
     }
 
@@ -184,17 +216,22 @@ public class LowEndArrayList<E> implements LowEndList<E> {
      * @author Daniel Escoz
      * @version 1.0
      */
-    private class LowEndArrayListIterator implements Iterator<E> {
+    private class LowEndArrayListIterator implements ListIterator<E> {
 
+        private int last;
         private int current;
         private boolean removed;
 
         /* package */LowEndArrayListIterator () {
         }
 
-        /** Resets this iterator so it can be reused */
-        /* package */public void reset () {
-            current = 0;
+        /**
+         * Resets this iterator so it can be reused
+         * 
+         * @param pos Initial position
+         */
+        /* package */public void reset (int pos) {
+            current = pos;
             removed = true;
         }
 
@@ -209,7 +246,8 @@ public class LowEndArrayList<E> implements LowEndList<E> {
                 throw new NoSuchElementException();
             }
             removed = false;
-            return elements[current++];
+            last = current++;
+            return elements[current];
         }
 
         @Override
@@ -218,13 +256,52 @@ public class LowEndArrayList<E> implements LowEndList<E> {
                 new IllegalStateException();
             }
             removed = true;
-            
+
             final int lSize = --size;
-            for (int i = --current, j; i < lSize; i = j) {
+            for (int i = last, j; i < lSize; i = j) {
                 j = i + 1;
                 elements[i] = elements[j];
             }
             elements[size] = null;
+        }
+
+        @Override
+        public void add (E elem) {
+            LowEndArrayList.this.add(last, elem);
+            
+        }
+
+        @Override
+        public boolean hasPrevious () {
+            return current > 0;
+        }
+
+        @Override
+        public int nextIndex () {
+            return current;
+        }
+
+        @Override
+        public E previous () {
+            if (!hasPrevious()) {
+                throw new NoSuchElementException();
+            }
+            removed = false;
+            last = --current;
+            return elements[current];
+        }
+
+        @Override
+        public int previousIndex () {
+            return current - 1;
+        }
+
+        @Override
+        public void set (E elem) {
+            if (removed) {
+                new IllegalStateException();
+            }
+            elements[last] = elem;
         }
     }
 

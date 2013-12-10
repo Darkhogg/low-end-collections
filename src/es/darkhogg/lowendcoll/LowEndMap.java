@@ -116,5 +116,11 @@ public interface LowEndMap<K, V> extends Iterable<LowEndMap.Entry<K,V>> {
 
         /** @return Value of this entry */
         public abstract V getValue ();
+
+        /**
+         * @param value New value for this entry
+         * @return Old value of the entry
+         */
+        public abstract V setValue (V value);
     }
 }
