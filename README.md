@@ -155,3 +155,30 @@ implications on this approach:
   one advantage you *need* on memory-critical applications: *There are no memory
   allocations derived from collection iteration*. This can save you a few GC's
   *per second*.
+
+
+Interfacing with JCF
+--------------------
+
+Although Low-End Collections classes and interfaces do not directly implement or
+extend the JCF ones, there's still hope if you need to pass LEC as JVC: the
+`LowEndCollections` utility class.
+
+The `LowEndCollections` class offers a static method for every LEC interface
+that returns a regular JCF of the same kind. The wrapped collections have the
+following properties
+
++ The `iterator` method of the collections returned by `toJavaCollection`,
+  `toJavaList` and `toJavaSet` call the wrapped collection's `newIterator`
+  method, hiding away the concept of shared iterators and letting clients use
+  the collections as actual regular JCF collections.
+
++ Similarly, the `listIterator` method of the lists returned by
+  `toJavaList` calls the wrapped list's `newListIterator` method.
+
++ If a `LowEndList` implements `RandomAccess`, the JCF `List` returned by
+  `toJavaList` also implements `RandomAccess`.
+
++ Maps returned by `toJavaMap` implement their `entrySet`s by creating an
+  `AbstractSet` that returns as their `iterator` a wrapped version of the
+  original map's `newIterator`.
