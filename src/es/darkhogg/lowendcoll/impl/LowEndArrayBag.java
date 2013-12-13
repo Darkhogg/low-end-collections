@@ -27,7 +27,8 @@ public class LowEndArrayBag<E> implements LowEndCollection<E> {
 
     /** Internal iterator */
     @SuppressWarnings("unchecked")
-    private final LowEndArrayBagIterator[] iterators = (LowEndArrayBagIterator[]) new Object[ITERATORS];
+    private final LowEndArrayBagIterator[] iterators =
+        (LowEndArrayBagIterator[]) new LowEndArrayBag<?>.LowEndArrayBagIterator[ITERATORS];
 
     /** Next iterator to retrieve */
     private int iterator;

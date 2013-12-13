@@ -30,7 +30,8 @@ public class LowEndArrayList<E> implements LowEndList<E>, RandomAccess {
 
     /** Internal iterator */
     @SuppressWarnings("unchecked")
-    private final LowEndArrayListIterator[] iterators = (LowEndArrayListIterator[]) new Object[ITERATORS];
+    private final LowEndArrayListIterator[] iterators =
+        (LowEndArrayListIterator[]) new LowEndArrayList<?>.LowEndArrayListIterator[ITERATORS];
 
     /** Next iterator to retrieve */
     private int iterator;
@@ -268,7 +269,7 @@ public class LowEndArrayList<E> implements LowEndList<E>, RandomAccess {
         @Override
         public void add (E elem) {
             LowEndArrayList.this.add(last, elem);
-            
+
         }
 
         @Override

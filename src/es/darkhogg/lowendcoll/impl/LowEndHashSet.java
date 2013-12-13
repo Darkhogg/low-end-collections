@@ -24,7 +24,8 @@ public final class LowEndHashSet<E> implements LowEndSet<E> {
 
     /** Internal iterator */
     @SuppressWarnings("unchecked")
-    private final LowEndHashSetIterator[] iterators = (LowEndHashSetIterator[]) new Object[ITERATORS];
+    private final LowEndHashSetIterator[] iterators =
+        (LowEndHashSetIterator[]) new LowEndHashSet<?>.LowEndHashSetIterator[ITERATORS];
 
     /** Next iterator to retrieve */
     private int iterator;

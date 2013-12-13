@@ -31,7 +31,8 @@ public class LowEndHashMap<K, V> implements LowEndMap<K,V> {
 
     /** Internal iterator */
     @SuppressWarnings("unchecked")
-    private final LowEndHashMapIterator[] iterators = (LowEndHashMapIterator[]) new Object[ITERATORS];
+    private final LowEndHashMapIterator[] iterators =
+        (LowEndHashMapIterator[]) new LowEndHashMap<?,?>.LowEndHashMapIterator[ITERATORS];
 
     /** Next iterator to retrieve */
     private int iterator;
