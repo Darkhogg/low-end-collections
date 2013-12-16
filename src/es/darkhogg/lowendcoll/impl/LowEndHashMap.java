@@ -29,6 +29,9 @@ public class LowEndHashMap<K, V> implements LowEndMap<K,V> {
     /** Current size of the map */
     /* package */int size;
 
+    /** Max size of the map */
+    private int maxSize;
+
     /** Internal iterator */
     @SuppressWarnings("unchecked")
     private final LowEndHashMapIterator[] iterators =
@@ -41,7 +44,7 @@ public class LowEndHashMap<K, V> implements LowEndMap<K,V> {
      * Creates a new closed hash map with default <i>capacity</i> and <i>load factor</i>.
      */
     public LowEndHashMap () {
-        this(16, .65f);
+        this(64, .65f);
     }
 
     /**
@@ -51,7 +54,7 @@ public class LowEndHashMap<K, V> implements LowEndMap<K,V> {
      * @param loadFactor Maximum load factor of this map
      */
     @SuppressWarnings("unchecked")
-    public LowEndHashMap (int capacity, float loadFactor) {
+    public LowEndHashMap (final int capacity, final float loadFactor) {
         if (loadFactor <= 0 || loadFactor >= 1) {
             throw new IllegalArgumentException("maxFactor: " + loadFactor);
         }
@@ -61,6 +64,7 @@ public class LowEndHashMap<K, V> implements LowEndMap<K,V> {
 
         this.loadFactor = loadFactor;
         this.size = 0;
+        this.maxSize = (int) (loadFactor * keys.length);
     }
 
     /**
@@ -68,9 +72,9 @@ public class LowEndHashMap<K, V> implements LowEndMap<K,V> {
      * 
      * @param map Map to copy mappings from
      */
-    public LowEndHashMap (Map<? extends K,? extends V> map) {
-        this((int) (map.size() / .65f) + 1, .65f);
-        for (Map.Entry<? extends K,? extends V> entry : map.entrySet()) {
+    public LowEndHashMap (final Map<? extends K,? extends V> map) {
+        this((int) (map.size() / .65f) + 1, .75f);
+        for (final Map.Entry<? extends K,? extends V> entry : map.entrySet()) {
             put(entry.getKey(), entry.getValue());
         }
     }
@@ -80,9 +84,9 @@ public class LowEndHashMap<K, V> implements LowEndMap<K,V> {
      * 
      * @param map Map to copy mappings from
      */
-    public LowEndHashMap (LowEndMap<? extends K,? extends V> map) {
+    public LowEndHashMap (final LowEndMap<? extends K,? extends V> map) {
         this((int) (map.size() / .65f) + 1, .65f);
-        for (LowEndMap.Entry<? extends K,? extends V> entry : map) {
+        for (final LowEndMap.Entry<? extends K,? extends V> entry : map) {
             put(entry.getKey(), entry.getValue());
         }
     }
@@ -103,7 +107,7 @@ public class LowEndHashMap<K, V> implements LowEndMap<K,V> {
     }
 
     @Override
-    public boolean containsKey (K key) {
+    public boolean containsKey (final K key) {
         int hash = hash(key, keys.length);
 
         int t = 0;
@@ -131,7 +135,7 @@ public class LowEndHashMap<K, V> implements LowEndMap<K,V> {
     }
 
     @Override
-    public V get (K key) {
+    public V get (final K key) {
         int hash = hash(key, keys.length);
 
         int t = 0;
@@ -149,19 +153,19 @@ public class LowEndHashMap<K, V> implements LowEndMap<K,V> {
     }
 
     @Override
-    public V put (K key, V value) {
+    public V put (final K key, final V value) {
         if (isFull() && !containsKey(key)) {
             throw new IllegalStateException("full");
         }
-        if (size > (loadFactor * keys.length)) {
-            rehash(Math.min(keys.length * 2 + 1, Integer.MAX_VALUE));
+        if (size > maxSize) {
+            rehash(Math.min(keys.length * 4 + 3, Integer.MAX_VALUE));
         }
 
         return putIn(keys, values, key, value);
     }
 
     @Override
-    public V remove (K key) {
+    public V remove (final K key) {
         int hash = hash(key, keys.length);
 
         int t = 0;
@@ -169,15 +173,15 @@ public class LowEndHashMap<K, V> implements LowEndMap<K,V> {
 
         while (t < al && keys[hash] != null) {
             if (keys[hash].equals(key)) {
-                V oldValue = values[hash];
+                final V oldValue = values[hash];
 
                 keys[hash] = null;
                 values[hash] = null;
 
                 int next = nextHash(hash, al);
                 while (keys[next] != null) {
-                    K pk = keys[next];
-                    V pv = values[next];
+                    final K pk = keys[next];
+                    final V pv = values[next];
 
                     keys[next] = null;
                     values[next] = null;
@@ -196,7 +200,7 @@ public class LowEndHashMap<K, V> implements LowEndMap<K,V> {
         return null;
     }
 
-    private final V putIn (K[] keys, V[] values, K key, V value) {
+    private final V putIn (final K[] keys, final V[] values, final K key, final V value) {
         int hash = hash(key, keys.length);
 
         int t = 0;
@@ -210,7 +214,7 @@ public class LowEndHashMap<K, V> implements LowEndMap<K,V> {
                 return null;
             }
             if (keys[hash].equals(key)) {
-                V oldValue = values[hash];
+                final V oldValue = values[hash];
                 values[hash] = value;
                 return oldValue;
             }
@@ -223,9 +227,9 @@ public class LowEndHashMap<K, V> implements LowEndMap<K,V> {
     }
 
     @SuppressWarnings("unchecked")
-    private final void rehash (int capacity) {
-        K[] newKeys = (K[]) new Object[capacity];
-        V[] newVals = (V[]) new Object[capacity];
+    private final void rehash (final int capacity) {
+        final K[] newKeys = (K[]) new Object[capacity];
+        final V[] newVals = (V[]) new Object[capacity];
 
         final int al = keys.length;
         for (int i = 0; i < al; i++) {
@@ -236,19 +240,21 @@ public class LowEndHashMap<K, V> implements LowEndMap<K,V> {
 
         keys = newKeys;
         values = newVals;
+
+        maxSize = (int) (loadFactor * keys.length);
     }
 
-    private static final int hash (Object key, int length) {
-        return ((key.hashCode() % length) + length) % length;
+    private static final int hash (final Object key, final int length) {
+        return (key.hashCode() & 0x7FFFFFFF) % length;
     }
 
-    private static final int nextHash (int hash, int length) {
-        return (((hash + 1) % length) + length) % length;
+    private static final int nextHash (final int hash, final int length) {
+        return ((hash + 1) & 0x7FFFFFFF) % length;
     }
 
     @Override
     public String toString () {
-        StringBuilder sb = new StringBuilder();
+        final StringBuilder sb = new StringBuilder();
         sb.append('[');
         boolean after = false;
 
@@ -281,7 +287,7 @@ public class LowEndHashMap<K, V> implements LowEndMap<K,V> {
 
     @Override
     public Iterator<es.darkhogg.lowendcoll.LowEndMap.Entry<K,V>> newIterator () {
-        LowEndHashMapIterator it = new LowEndHashMapIterator(false);
+        final LowEndHashMapIterator it = new LowEndHashMapIterator(false);
         it.reset();
         return it;
     }
@@ -297,7 +303,7 @@ public class LowEndHashMap<K, V> implements LowEndMap<K,V> {
         /** Whether the lastitem was removed */
         private boolean removed;
 
-        /* package */LowEndHashMapIterator (boolean shareEntries) {
+        /* package */LowEndHashMapIterator (final boolean shareEntries) {
             if (shareEntries) {
                 entry = new LowEndHashMapEntry();
             } else {
@@ -370,7 +376,7 @@ public class LowEndHashMap<K, V> implements LowEndMap<K,V> {
          * @param key New key to use
          * @param value New value to use
          */
-        /* package */void reset (K key, V value) {
+        /* package */void reset (final K key, final V value) {
             this.key = key;
             this.value = value;
         }
@@ -386,7 +392,7 @@ public class LowEndHashMap<K, V> implements LowEndMap<K,V> {
         }
 
         @Override
-        public V setValue (V newValue) {
+        public V setValue (final V newValue) {
             return put(key, newValue);
         }
     }
