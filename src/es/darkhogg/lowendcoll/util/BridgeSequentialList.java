@@ -18,9 +18,6 @@ import es.darkhogg.lowendcoll.LowEndList;
      * @param list List to wrap
      */
     /* package */BridgeSequentialList (LowEndList<T> list) {
-        if (!(list instanceof RandomAccess)) {
-            throw new ClassCastException("list is not RandomAccess");
-        }
         this.list = list;
     }
 
