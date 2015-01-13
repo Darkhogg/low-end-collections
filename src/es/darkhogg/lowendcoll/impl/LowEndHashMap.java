@@ -286,7 +286,7 @@ public class LowEndHashMap<K, V> implements LowEndMap<K,V> {
     }
 
     @Override
-    public Iterator<es.darkhogg.lowendcoll.LowEndMap.Entry<K,V>> newIterator () {
+    public Iterator<LowEndMap.Entry<K,V>> newIterator () {
         final LowEndHashMapIterator it = new LowEndHashMapIterator(false);
         it.reset();
         return it;
@@ -300,7 +300,7 @@ public class LowEndHashMap<K, V> implements LowEndMap<K,V> {
         /** Current iteration index */
         private int index;
 
-        /** Whether the lastitem was removed */
+        /** Whether the last item was removed */
         private boolean removed;
 
         /* package */LowEndHashMapIterator (final boolean shareEntries) {
@@ -393,7 +393,9 @@ public class LowEndHashMap<K, V> implements LowEndMap<K,V> {
 
         @Override
         public V setValue (final V newValue) {
-            return put(key, newValue);
+            V oldValue = put(key, newValue);
+            value = newValue;
+            return oldValue;
         }
     }
 
